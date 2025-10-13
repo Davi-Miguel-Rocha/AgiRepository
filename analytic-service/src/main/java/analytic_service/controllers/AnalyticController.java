@@ -86,10 +86,11 @@ public class AnalyticController {
             )
     })
     @GetMapping("/customer/{customerId}")
-    public ResponseEntity<List<Analytic>> findByCustomer(@PathVariable Long customerId) {
-        List<Analytic> response = analyticService.findByCustomerId(customerId);
+    public ResponseEntity<List<?>> findByCustomer(@PathVariable Long customerId) {
+        List<?> response = analyticService.findByCustomerId(customerId);
 
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
+
     }
 
 }

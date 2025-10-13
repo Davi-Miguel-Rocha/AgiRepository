@@ -1,0 +1,15 @@
+# agiReport/.gitignore
+
+# Arquivo de segredos global
+/.env
+
+# Chaves SSH (Se forem geradas aqui e não estiverem em .ssh)
+/*.key
+
+# Excluir binários de build que podem vazar para o nível superior
+/target/
+/build/
+
+# OCI - Configuração de ambiente local
+.oci/
+/certs/

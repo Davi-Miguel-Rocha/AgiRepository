@@ -115,9 +115,12 @@ public class AnalyticService {
         LocalDate onCreateDate = customer.getOnCreate().toLocalDate();
         LocalDateTime startDate = LocalDate.now().minusDays(10).atStartOfDay();
 
-        Optional<Analytic> optionalAnalytic = analyticRepository.findByCustomerIdLastTenDaysAndStatusProcess(customerId, startDate);
+        Optional<Analytic> optionalAnalytic = analyticRepository.findByCustomerIdLastTenDays(customerId, startDate);
         if (optionalAnalytic.isPresent()) {
-            return analyticMapper.toDefaultDto(optionalAnalytic.get(), onCreateDate);
+
+            return optionalAnalytic.get().getStatus().equals("CONCLUIDO") ? analyticMapper.toCompleteDto(optionalAnalytic.get(), onCreateDate)
+                    : analyticMapper.toDefaultDto(optionalAnalytic.get(), onCreateDate);
+
         }
         Analytic entity = new Analytic(customerId);
         analyticRepository.save(entity);
@@ -142,8 +145,7 @@ public class AnalyticService {
                 reprocessSingleAnalytic(entity);
             } catch (ObjectOptimisticLockingFailureException ignored) {
                 log.info("Sendo tratado por outra thread - ignorado");
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 log.error("Falha CRÍTICA ao tentar reprocessar a Análise ID {}. Cliente ID: {}",
                         entity.getId(), entity.getClientId(), e);
             }
@@ -214,14 +216,19 @@ public class AnalyticService {
     }
 
     @Transactional(readOnly = true)
-    public List<Analytic> findByCustomerId(Long customerId) {
+    public List<?> findByCustomerId(Long customerId) {
         List<Analytic> analytics = analyticRepository.findByCustomerId(customerId);
+        List<?> dtos = analytics.stream().map(
+                x -> x.getStatus().equals("CONCLUIDO") ? analyticMapper.toCompleteDto(x, x.getOnCreate().toLocalDate())
+                        : analyticMapper.toDefaultDto(x, x.getOnCreate().toLocalDate())
+
+        ).toList();
 
         if (analytics.isEmpty()) {
             throw new EntityNotFoundException("Não foram encontradas análises para o cliente " + customerId);
         }
 
-        return analytics;
+        return dtos;
     }
 }
 
